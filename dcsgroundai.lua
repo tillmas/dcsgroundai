@@ -1,5 +1,5 @@
 --dcsgroundai
---written using MIST XXXX
+--written using MIST 4.5.107
 
 -- function definitions
 
@@ -17,12 +17,12 @@ function assignMission(UnfriendlyZones,FriendlyZones,ReferenceUnit)
 		defZone = 0
 		attZone = 0
 		
-		for i=1,getn(UnfriendlyZones) do
+		for i=1,table.getn(UnfriendlyZones) do
 			testCoords = mist.getRandomPointInZone(UnfriendlyZones[i],0)
 			currentCoords = mist.getAvgPos(ReferenceUnit)
 			
 			distance = mist.utils.get2DDist(currentCoords, testCoords)
-			if distance < attDist 
+			if distance < attDist then
 				attDist = distance
 				attZone = i
 			end
@@ -30,12 +30,12 @@ function assignMission(UnfriendlyZones,FriendlyZones,ReferenceUnit)
 		end
 	
 	--for now, the defended zone will be the closest friendly zone to where they are (should be the currently occupied zone)
-		for k=1,getn(FriendlyZones) do
+		for k=1,table.getn(FriendlyZones) do
 			testCoords = mist.getRandomPointInZone(FriendlyZones[i],0)
 			currentCoords = mist.getAvgPos(ReferenceUnit)
 			
 			distance = mist.utils.get2DDist(currentCoords, testCoords)
-			if distance < attDist 
+			if distance < attDist then
 				defDist = distance
 				defZone = i
 			end
@@ -82,10 +82,12 @@ blueAttackZone,blueDefendZone = assignMission(redZones,blueZones,blueHQ)
 
 -- 5.  Send units to waypoints based on commanders' missions
 
-do
-	mist.groupToRandomZone(blueAttack ,blueAttackZone , nil ,nil ,50 ,true )
+-- this needs to be a loop for all entities in blueAttack
+for i = 1,table.getn(blueAttack) do
+	mist.groupToRandomZone(blueAttack[i] ,blueAttackZone , nil ,nil ,50 ,true )
 end
 
-do
-	mist.groupToRandomZone(blueDefend ,blueDefendZone , nil ,nil ,50 ,true )
+
+for i = 1, table.getn(blueDefend) do
+	mist.groupToRandomZone(blueDefend[i] ,blueDefendZone , nil ,nil ,50 ,true )
 end

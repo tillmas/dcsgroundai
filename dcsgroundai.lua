@@ -12,94 +12,23 @@ function table.contains(table, element)
   return false
 end
 
-function table.invert(t)
+function table.invert(table)
    local s={}
-   for k,v in pairs(t) do
+   for k,v in pairs(table) do
      s[v]=k
    end
    return s
 end
 
 function assignMission(TargetZones,UnfriendlyZones,FriendlyZones,ReferenceUnit,numAttack,numDefend)
+--a much simpler version for testing, returns one of each
 
-	--function will give a commander an attack order and a defend order
-	--Unfriendly zones should be the array of unfriendly zones
-	--friendly zones should be an array of the friendly zones
-	--ReferenceUnit will be where the algorithm starts looking from
-	--will return two tables, the attack zone and the defend zone
-	
-		local defDist = 1000000000
-		defZone = {}
-		attZone = {}
-		local targetFriendly = {}
-		local targetUnfriendly = {}
-	
-	-- this will put all of the target zones into either friendly or unfriendly
-	for i=1,table.getn(TargetZones) do
-		if table.contains(UnfriendlyZones,TargetZones[i]) == true then
-			table.insert(targetUnfriendly,TargetZones[i])
-		else
-			table.insert(targetFriendly,TargetZones[i])
-		end
-	end
-	--if the number of attacks is more than the number of unfriendly target zones, just return all of them
-	
-	if table.getn(targetUnfriendly) <= numAttack then
-		attZone = targetUnfriendly
-	
-		else
-		-- build a table with the distances between each zone and the reference
-		local distances = {}
-		
-		for j = 1,table.getn(targetUnfriendly) do
-			local testCoords = mist.getRandomPointInZone(targetUnfriendly[j],0)
-			local refCoords = mist.getAvgPos(ReferenceUnit)
-			
-			local tempDistance = mist.utils.get2DDist(refCoords, testCoords)
-			distances[targetUnfriendly[j]] = tempDistance
-		end
-		
-		--sort the unfriendly zones by distance
-		table.sort(distances)
-		
-		--invert the table to get the sorted index (zone names)
-		table.invert(distances)
-		
-		for k = 1,numAttack do
-		
-			table.insert(attZone,distances[i])
-		end
-	end
-
-	if table.getn(targetFriendly) <= numDefend then
-		defZone = targetFriendly
-	
-		else
-		-- build a table with the distances between each zone and the reference
-		local distances = {}
-		
-		for j = 1,table.getn(targetFriendly) do
-			local testCoords = mist.getRandomPointInZone(targetFriendly[j],0)
-			local refCoords = mist.getAvgPos(ReferenceUnit)
-			
-			local tempDistance = mist.utils.get2DDist(refCoords, testCoords)
-			distances[targetFriendly[j]] = tempDistance
-		end
-		
-		--sort the unfriendly zones by distance
-		table.sort(distances)
-		
-		--invert the table to get the sorted index (zone names)
-		table.invert(distances)
-		
-		for k = 1,numDefend do
-		
-			table.insert(defZone,distances[i])
-		end
-	end
-
+	local attZone = UnfriendlyZones[1]
+	local defZone = FriendlyZones[1]
 	
 	return attZone, defZone
+	
+
 end
 
 -- 1. Zone Control
@@ -132,15 +61,16 @@ for i = 1,5 do
 
 end
 
--- 2.  Higher Order Command: Assign the commanders missions 
-
-blueAttackZone,blueDefendZone = assignMission(targetZones,redZones,blueZones,blueHQ,1,1)
-
 -- 3b.  Force Structure
 
 blueHQ =  'CHQ'
 bluePlatoons = {"C1-1","C2-1"}
 bluePlatoonTypes = {"armor","armor"}
+
+-- 2.  Higher Order Command: Assign the commanders missions 
+blueAttackZone = {}
+blueDefendZone = {}
+blueAttackZone,blueDefendZone = assignMission(targetZones,redZones,blueZones,bluePlatoons,1,1)
 
 -- 4.  Force Disposition
 -- create a table to disposition destinations for each platoon for blue - clearly not algorithmic at this time
@@ -148,16 +78,15 @@ bluePlatoonTypes = {"armor","armor"}
 
 --this is where we can write some clever AI that behave differently.
 
-for i 1,(table.getn(bluePlatoons)) do
+blueAssignedZone={}
+
+for i=1,(table.getn(bluePlatoons)) do
 
 	blueAssignedZone[bluePlatoons[i]] = blueAttackZone
 
 end
 
 blueAssignedZone[blueHQ] = blueZones[1]
-
-blueAssignedZone = {blueAttackZone, blueDefendZone, blueDefendZone}
-
 
 
 -- 5.  Movement Orders: Send units to waypoints based on commanders' missions

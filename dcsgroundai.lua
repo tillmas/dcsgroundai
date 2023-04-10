@@ -61,33 +61,34 @@ end
 blueZones = {'1-1'}
 redZones = {'1-2','1-3','1-4','1-5','1-6','1-7','1-8','1-9','1-10'}
 
--- 2.  Identify commanders for both sides
 
-blueHQ =  'CHQ'
-
--- 3.  Define forces for both sides
--- define the forces for blue
-
-blueAttack = {"C1-1"}
-blueSupport = {} --currently not used
-blueDefend = {"C2-1"}
-blueScout = {} -- currently not used
-
--- define the forces for red
--- not currently implemented
-
--- 4.  Assign the commanders missions
+-- 2.  Higher Order Command: Assign the commanders missions 
 
 blueAttackZone,blueDefendZone = assignMission(redZones,blueZones,blueHQ)
 
--- 5.  Send units to waypoints based on commanders' missions
+-- 3b.  Force Structure
 
--- this needs to be a loop for all entities in blueAttack
-for i = 1,table.getn(blueAttack) do
-	mist.groupToRandomZone(blueAttack[i] ,blueAttackZone , nil ,nil ,50 ,true )
+blueHQ =  'CHQ'
+bluePlatoons = {"C1-1","C2-1"}
+bluePlatoonTypes = {"armor","armor"}
+
+-- 4.  Force Disposition
+-- create a table to disposition destinations for each platoon for blue - clearly not algorithmic at this time
+-- the last entry is for the HQ unit
+
+blueAssignedZone = {blueAttackZone, blueDefendZone, blueDefendZone}
+
+
+
+-- 5.  Movement Orders: Send units to waypoints based on commanders' missions
+
+--all units except HQ
+for i = 1,table.getn(bluePlatoons) do
+	mist.groupToRandomZone(bluePlatoons[i] ,blueAssignedZone[i] , nil ,nil ,50 ,true )
 end
 
-
-for i = 1, table.getn(blueDefend) do
-	mist.groupToRandomZone(blueDefend[i] ,blueDefendZone , nil ,nil ,50 ,true )
+-- HQ
+do
+	mist.groupToRandomZone(blueHQ ,blueAssignedZone[table.getn(blueAssignedZone)] , nil ,nil ,50 ,true )
 end
+

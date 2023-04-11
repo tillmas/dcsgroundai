@@ -20,19 +20,30 @@ function table.invert(table)
    return s
 end
 
-function assignMission(TargetZones,UnfriendlyZones,FriendlyZones,ReferenceUnit,numAttack,numDefend)
---a much simpler version for testing, returns one of each
+function assignMission(TargetZones,ReferenceUnit,numZones)
+--a simple version for testing, returns as many are as asked for
 
-	local attZone = UnfriendlyZones[1]
-	local defZone = FriendlyZones[1]
+	attZone = {}
+
+	if table.getn(TargetZones) <= numZones then
 	
-	return attZone, defZone
+		attZone = TargetZones
+	
+	else
+
+		for i=1,numZones do
+			attZone[i] = TargetZones[math.random(1,table.getn(TargetZones))]
+		end
+	
+	end
+	
+	return attZone
 	
 
 end
 
 -- 1. Zone Control
-
+-- this could be done a little easier/simpler with the included zone handling in MIST
 numZones = 10 -- set by the mission designer
 zoneList = {}
 
@@ -44,12 +55,13 @@ end
 
 -- identify the starting state of blue and red controlled zones
 
-blueZones = {'1-1'}
-redZones = {'1-2','1-3','1-4','1-5','1-6','1-7','1-8','1-9','1-10'}
+local blueZones = {'1-1'}
+local redZones = {'1-2','1-3','1-4','1-5','1-6','1-7','1-8','1-9','1-10'}
 
 -- randomly choose five zones of interest for the mission
+-- this could be done with some kind of weighted value function
 
-targetZones = {}
+local targetZones = {}
 
 for i = 1,5 do
 	testZone = zoneList[math.random(table.getn(zoneList))]
@@ -63,14 +75,13 @@ end
 
 -- 3b.  Force Structure
 
-blueHQ =  'CHQ'
-bluePlatoons = {"C1-1","C2-1"}
-bluePlatoonTypes = {"armor","armor"}
+local blueHQ =  'CHQ'
+local bluePlatoons = {"C1-1","C2-1"}
+local bluePlatoonTypes = {"armor","armor"}
 
 -- 2.  Higher Order Command: Assign the commanders missions 
-blueAttackZone = {}
-blueDefendZone = {}
-blueAttackZone,blueDefendZone = assignMission(targetZones,redZones,blueZones,bluePlatoons,1,1)
+local moveZones = {}
+moveZones = assignMission(targetZones,bluePlatoons,2)
 
 -- 4.  Force Disposition
 -- create a table to disposition destinations for each platoon for blue - clearly not algorithmic at this time
@@ -78,11 +89,11 @@ blueAttackZone,blueDefendZone = assignMission(targetZones,redZones,blueZones,blu
 
 --this is where we can write some clever AI that behave differently.
 
-blueAssignedZone={}
+local blueAssignedZone={}
 
 for i=1,(table.getn(bluePlatoons)) do
 
-	blueAssignedZone[bluePlatoons[i]] = blueAttackZone
+	blueAssignedZone[bluePlatoons[i]] = moveZones[i]
 
 end
 

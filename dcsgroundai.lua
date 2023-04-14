@@ -43,31 +43,40 @@ function assignMission(TargetZones,ReferenceUnit,numZones)
 
 end
 
--- 1. Zone Control
-local zoneList = {}
-local output = {}
+function zoneControl(numberTaskZones)
 
-for _, z in pairs(mist.DBs.zonesByName) do
-    zoneList[#zoneList+1] = z
+	--create a list of all the zones in the mission
+	local zoneList = {}
+	local output = {}
+
+	for _, z in pairs(mist.DBs.zonesByName) do
+		zoneList[#zoneList+1] = z
+	end
+
+	-- randomly choose five zones of interest for the mission
+	-- this could be done with some kind of weighted value function
+	local targetZones = {}
+
+	for i = 1,numberTaskZones do
+		testZone = zoneList[math.random(table.getn(zoneList))]
+			if table.contains(targetZones,testZone)==false then
+				table.insert(targetZones,testZone)
+			else
+				i = i-1
+			end
+	end
+	
+	return targetZones
+	
 end
+
+-- 1. Zone Control
+
+targetZones = zoneControl(5)
 
 -- identify the starting state of blue and red controlled zones
 local blueZones = {'1-1'}
 local redZones = {'1-2','1-3','1-4','1-5','1-6','1-7','1-8','1-9','1-10'}
-
--- randomly choose five zones of interest for the mission
--- this could be done with some kind of weighted value function
-local targetZones = {}
-
-for i = 1,5 do
-	testZone = zoneList[math.random(table.getn(zoneList))]
-		if table.contains(targetZones,testZone)==false then
-			table.insert(targetZones,testZone)
-		else
-			i = i-1
-		end
-
-end
 
 -- 3b.  Force Structure
 

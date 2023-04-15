@@ -1,16 +1,9 @@
 --dcsgroundai
 --written using MIST 4.5.107
 
--- mission editor inputs
-
-local numberTargetZones = 5
--- mission editors may change the prefix below to whatever they wish to use in the mission.
--- if the zone name prefix is followed by an R (e.g. 'GAZR-1), the zone will be flagged as Red
--- if the zone name prefix is followed by an B (e.g. 'GAZB-1), the zone will be flagged as Blue
--- if the zone name prefix is not followed by a B or and R, the zone will be flagged as Neutral
-local prefix = 'GAZ'
-
--- function definitions
+-- *********************************************************
+-- Function definitions
+-- *********************************************************
 function table.contains(table, element)
   for _, value in pairs(table) do
     if value == element then
@@ -99,28 +92,50 @@ function getAllZonesWithPrefix(prefix)
 	return list
 end
 
+-- *********************************************************
+-- ****************** 		   MAIN 		****************
+-- *********************************************************
 -- 0. Setup
+-- *********************************************************
 --need a random number seed here
 
--- 1. Zone Control
+-- mission editor inputs
 
+local _NUM_TARGET_ZONES = 5
+
+-- mission editors may change the prefix below to whatever they wish to use in the mission.
+-- if the zone name prefix is followed by an R (e.g. 'GAZR-1), the zone will be flagged as Red
+-- if the zone name prefix is followed by an B (e.g. 'GAZB-1), the zone will be flagged as Blue
+-- if the zone name prefix is not followed by a B or and R, the zone will be flagged as Neutral
+local _ZONE_PREFIX = 'GAZ'
+
+-- *********************************************************
+-- 1. Zone Control
+-- *********************************************************
 local zoneList = {}
-zoneList = getAllZonesWithPrefix(prefix)
+zoneList = getAllZonesWithPrefix(_ZONE_PREFIX)
 
 local targetZones = {}
-targetZones = zoneSelector(zoneList,numberTargetZones)
+targetZones = zoneSelector(zoneList, _NUM_TARGET_ZONES)
 
 
+-- *********************************************************
 -- 3b.  Force Structure
+-- *********************************************************
 local bluePlatoons = {"C1-1","C2-1"}
 local bluePlatoonTypes = {"armor","armor"}
 
 
+-- *********************************************************
 -- 2.  Higher Order Command: Assign the commanders missions 
+-- *********************************************************
 local moveZones = {}
 moveZones = assignMission(targetZones,bluePlatoons,2)
 
+
+-- *********************************************************
 -- 4.  Force Disposition
+-- *********************************************************
 -- create a table to disposition destinations for each platoon for blue - clearly not algorithmic at this time
 -- the last entry is for the HQ unit
 
@@ -134,8 +149,9 @@ for i=1,(table.getn(bluePlatoons)) do
 end
 
 
-
+-- *********************************************************
 -- 5.  Movement Orders: Send units to waypoints based on commanders' missions
+-- *********************************************************
 for i = 1,table.getn(bluePlatoons) do
 	mist.groupToRandomZone(bluePlatoons[i] ,blueAssignedZone[bluePlatoons[i]] , nil ,nil ,50 ,true )
 end

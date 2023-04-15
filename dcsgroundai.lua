@@ -92,6 +92,58 @@ function getAllZonesWithPrefix(prefix)
 	return list
 end
 
+function generateCommander()
+
+	-- Commander Strategy Enumerations
+	-- DEFAULT: 
+	
+	-- TODO: Commander strategy enumerations, and 
+	-- 		add logic to assign a strategy to commanders
+	--	
+	--	Need to consider how commanders can persist 
+	--		between missions.
+	
+	return {
+		["strategy"] = "DEFAULT",
+		["forces"] = {}
+	}
+end
+
+function getForceStructure(prefix) 
+	-- Returns a list of commanders and their forces
+	-- {
+	--		["Commander1"] = {
+	--			["strategy"] = "STRATEGY_NAME",
+	--			["forces"] = {
+	--				"Unit/Group 1 name"
+	--				"Unit/Group 2 name"
+	--			}
+	--		}
+	-- }
+
+	-- Get forces in battlefield with user-defined prefix
+	local forceStructure = {}
+	for _, g in pairs(mist.DBs.groupsByName) do
+		-- Parse group object name into prefix, commander's name, and group's name
+		-- [PREFIX]_[COMMANDERNAME]_[GROUPNAME]
+		local groupPrefix, commanderName, groupName = string.match(g.groupName, "(.*)_(.*)_(.*)")
+
+		if (groupPrefix == prefix) then
+		
+			--	Check if commander object already exists. If not, create it.
+			if (forceStructure[commanderName] == nil) then
+				forceStructure[commanderName] = generateCommander()
+			end
+			
+			-- 	Add unit/group to commander object's "forces" table.
+			table.insert(forceStructure[commanderName]["forces"], g.groupName)
+		end
+	end
+	
+	return forceStructure
+end
+
+
 -- *********************************************************
 -- ****************** 		   MAIN 		****************
 -- *********************************************************
@@ -107,13 +159,13 @@ local _NUM_TARGET_ZONES = 5
 -- if the zone name prefix is followed by an R (e.g. 'GAZR-1), the zone will be flagged as Red
 -- if the zone name prefix is followed by an B (e.g. 'GAZB-1), the zone will be flagged as Blue
 -- if the zone name prefix is not followed by a B or and R, the zone will be flagged as Neutral
-local _ZONE_PREFIX = 'GAZ'
+local _PREFIX = 'GAZ'
 
 -- *********************************************************
 -- 1. Zone Control
 -- *********************************************************
 local zoneList = {}
-zoneList = getAllZonesWithPrefix(_ZONE_PREFIX)
+zoneList = getAllZonesWithPrefix(_PREFIX)
 
 local targetZones = {}
 targetZones = zoneSelector(zoneList, _NUM_TARGET_ZONES)
@@ -122,15 +174,15 @@ targetZones = zoneSelector(zoneList, _NUM_TARGET_ZONES)
 -- *********************************************************
 -- 3b.  Force Structure
 -- *********************************************************
-local bluePlatoons = {"C1-1","C2-1"}
-local bluePlatoonTypes = {"armor","armor"}
-
+local forceStucture = getForceStructure(_PREFIX)
 
 -- *********************************************************
 -- 2.  Higher Order Command: Assign the commanders missions 
 -- *********************************************************
 local moveZones = {}
-moveZones = assignMission(targetZones,bluePlatoons,2)
+-- TODO: forceStructure["C1"]["forces"] is temporary code to make Higher Order Command still work.
+-- This will be updated in issue #6.
+moveZones = assignMission(targetZones, forceStructure["C1"]["forces"], 2)
 
 
 -- *********************************************************

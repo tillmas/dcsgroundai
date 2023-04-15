@@ -43,14 +43,18 @@ function assignMission(TargetZones,ReferenceUnit,numZones)
 
 end
 
-function zoneControl(numberTaskZones)
+function zoneControl(numberTaskZones,zonePrefixes)
 
 	--create a list of all the zones in the mission
 	local zoneList = {}
 	local output = {}
-
+	
 	for _, z in pairs(mist.DBs.zonesByName) do
-		zoneList[#zoneList+1] = z
+		for i=1,table.getn(zonePrefixes) do
+			if string.find(zonePrefix[i],z) then
+				zoneList[#zoneList+1] = z
+			end
+		end
 	end
 
 	-- randomly choose five zones of interest for the mission
@@ -71,12 +75,18 @@ function zoneControl(numberTaskZones)
 end
 
 -- 1. Zone Control
+local blueZonePrefix = 'BZ'
+local redZonePrefix = 'RZ'
+local zonePrefixes = {blueZonePrefix,redZonePrefix}
+local numberTargetZones = 5
 
-targetZones = zoneControl(5)
+targetZones = zoneControl(numberTargetZones,zonePrefixes)
 
 -- identify the starting state of blue and red controlled zones
+-- this will only matter until the force disposition function is updated below, then remove
 local blueZones = {'1-1'}
 local redZones = {'1-2','1-3','1-4','1-5','1-6','1-7','1-8','1-9','1-10'}
+
 
 -- 3b.  Force Structure
 

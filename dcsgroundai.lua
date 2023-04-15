@@ -81,11 +81,11 @@ function getAllZonesWithPrefix(prefix)
 			local zoneControlPrefix = string.sub(z.name, 1, #prefix + 2)
 			
 			-- If zone name has the form 'prefixR ', set controlledBy to "Red"
-			if (zoneControlPrefix == prefix .. "R ") then
+			if (zoneControlPrefix == prefix .. "R") then
 				z["controlledBy"] = "Red"
 				
 			-- If zone name has the form 'prefixR ', set controlledBy to "Blue"
-			elseif (zoneControlPrefix == prefix .. "B ") then
+			elseif (zoneControlPrefix == prefix .. "B") then
 				z["controlledBy"] = "Blue"
 		
 			-- Otherwise, set controlledBy to "Neutral"

@@ -122,7 +122,7 @@ function getForceStructure(prefix)
 	-- }
 
 	-- Get forces in battlefield with user-defined prefix
-	local forceStructure = {}
+	local commanderList = {}
 	for _, g in pairs(mist.DBs.groupsByName) do
 		-- Parse group object name into prefix, commander's name, and group's name
 		-- [PREFIX]_[COMMANDERNAME]_[GROUPNAME]
@@ -131,16 +131,16 @@ function getForceStructure(prefix)
 		if (groupPrefix == prefix) then
 		
 			--	Check if commander object already exists. If not, create it.
-			if (forceStructure[commanderName] == nil) then
-				forceStructure[commanderName] = generateCommander()
+			if (commanderList[commanderName] == nil) then
+				commanderList[commanderName] = generateCommander()
 			end
 			
 			-- 	Add unit/group to commander object's "forces" table.
-			table.insert(forceStructure[commanderName]["forces"], g.groupName)
+			table.insert(commanderList[commanderName]["forces"], g.groupName)
 		end
 	end
 	
-	return forceStructure
+	return commanderList
 end
 
 
@@ -174,7 +174,7 @@ targetZones = zoneSelector(zoneList, _NUM_TARGET_ZONES)
 -- *********************************************************
 -- 3b.  Force Structure
 -- *********************************************************
-local forceStucture = getForceStructure(_PREFIX)
+local commanderForces = getForceStructure(_PREFIX)
 
 -- *********************************************************
 -- 2.  Higher Order Command: Assign the commanders missions 
@@ -182,7 +182,7 @@ local forceStucture = getForceStructure(_PREFIX)
 local moveZones = {}
 -- TODO: forceStructure["C1"]["forces"] is temporary code to make Higher Order Command still work.
 -- This will be updated in issue #6.
-moveZones = assignMission(targetZones, forceStructure["C1"]["forces"], 2)
+moveZones = assignMission(targetZones, commanderForces["C2"]["forces"], 2)
 
 
 -- *********************************************************
@@ -192,20 +192,21 @@ moveZones = assignMission(targetZones, forceStructure["C1"]["forces"], 2)
 -- the last entry is for the HQ unit
 
 --this is where we can write some clever AI that behave differently.
-local blueAssignedZone={}
+-- local blueAssignedZone = {}
 
-for i=1,(table.getn(bluePlatoons)) do
+-- for i=1,(table.getn(bluePlatoons)) do
 
-	blueAssignedZone[bluePlatoons[i]] = moveZones[i]
+--	blueAssignedZone[bluePlatoons[i]] = moveZones[i]
 
-end
+-- end
 
 
 -- *********************************************************
 -- 5.  Movement Orders: Send units to waypoints based on commanders' missions
 -- *********************************************************
-for i = 1,table.getn(bluePlatoons) do
-	mist.groupToRandomZone(bluePlatoons[i] ,blueAssignedZone[bluePlatoons[i]] , nil ,nil ,50 ,true )
+for i = 1,2 do
+--	mist.groupToRandomZone(bluePlatoons[i], blueAssignedZone[bluePlatoons[i]], nil, nil, 50, true)
+	mist.groupToRandomZone(commanderForces["C2"]["forces"][i], moveZones[i], nil, nil, 50, true)
 end
 
 

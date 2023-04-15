@@ -1,8 +1,13 @@
 --dcsgroundai
 --written using MIST 4.5.107
 
--- function definitions
+-- mission editor inputs
 
+local numberTargetZones = 5
+local blueZonePrefix = 'BZ'
+local redZonePrefix = 'RZ'
+
+-- function definitions
 function table.contains(table, element)
   for _, value in pairs(table) do
     if value == element then
@@ -48,12 +53,16 @@ function zoneControl(numberTaskZones,zonePrefixes)
 	--create a list of all the zones in the mission
 	local zoneList = {}
 	local output = {}
+	local blueZones = {}
+	local redZones = {}
 	
 	for _, z in pairs(mist.DBs.zonesByName) do
-		for i=1,table.getn(zonePrefixes) do
-			if string.find(zonePrefix[i],z) then
-				zoneList[#zoneList+1] = z
-			end
+		if string.find(zonePrefix[1],z) then
+			zoneList[#zoneList+1] = z
+			blueZones[#blueZones+1] = z
+		elseif string.find(zonePrefix[2],z) then
+			zoneList[#zoneList+1] = z
+			redZones[#redZones+1] = z
 		end
 	end
 
@@ -70,23 +79,23 @@ function zoneControl(numberTaskZones,zonePrefixes)
 			end
 	end
 	
-	return targetZones
+	return targetZones,blueZones,redZones
 	
 end
 
--- 1. Zone Control
-local blueZonePrefix = 'BZ'
-local redZonePrefix = 'RZ'
-local zonePrefixes = {blueZonePrefix,redZonePrefix}
-local numberTargetZones = 5
+-- 0. Setup
+--need a random number seed here
 
-targetZones = zoneControl(numberTargetZones,zonePrefixes)
+-- 1. Zone Control
+
+local zonePrefixes = {blueZonePrefix,redZonePrefix}
+
+targetZones, blueZones, redZones = zoneControl(numberTargetZones,zonePrefixes)
 
 -- identify the starting state of blue and red controlled zones
 -- this will only matter until the force disposition function is updated below, then remove
-local blueZones = {'1-1'}
-local redZones = {'1-2','1-3','1-4','1-5','1-6','1-7','1-8','1-9','1-10'}
-
+--local blueZones = {'1-1'}
+--local redZones = {'1-2','1-3','1-4','1-5','1-6','1-7','1-8','1-9','1-10'}
 
 -- 3b.  Force Structure
 

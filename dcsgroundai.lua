@@ -4,8 +4,11 @@
 -- mission editor inputs
 
 local numberTargetZones = 5
-local blueZonePrefix = 'BZ'
-local redZonePrefix = 'RZ'
+-- mission editors may change the prefix below to whatever they wish to use in the mission.
+-- if the zone name prefix is followed by an R (e.g. 'GAZR-1), the zone will be flagged as Red
+-- if the zone name prefix is followed by an B (e.g. 'GAZB-1), the zone will be flagged as Blue
+-- if the zone name prefix is not followed by a B or and R, the zone will be flagged as Neutral
+local prefix = 'GAZ'
 
 -- function definitions
 function table.contains(table, element)
@@ -48,23 +51,7 @@ function assignMission(TargetZones,ReferenceUnit,numZones)
 
 end
 
-function zoneControl(numberTaskZones,zonePrefixes)
-
-	--create a list of all the zones in the mission
-	local zoneList = {}
-	local output = {}
-	local blueZones = {}
-	local redZones = {}
-	
-	for _, z in pairs(mist.DBs.zonesByName) do
-		if string.find(zonePrefix[1],z) then
-			zoneList[#zoneList+1] = z
-			blueZones[#blueZones+1] = z
-		elseif string.find(zonePrefix[2],z) then
-			zoneList[#zoneList+1] = z
-			redZones[#redZones+1] = z
-		end
-	end
+function zoneSelector(zoneList,numberTaskZones)
 
 	-- randomly choose five zones of interest for the mission
 	-- this could be done with some kind of weighted value function
@@ -79,8 +66,37 @@ function zoneControl(numberTaskZones,zonePrefixes)
 			end
 	end
 	
-	return targetZones,blueZones,redZones
+	return targetZones
 	
+end
+
+function getAllZonesWithPrefix(prefix)
+	-- Returns list of all zones with names containing the prefix [prefix]
+	local list = {}
+	for _, z in pairs(mist.DBs.zonesByName) do
+	
+		-- If zone name starts with specified prefix, add the zone to the list.
+		if (string.sub(z.name, 1, #prefix) == prefix) then
+			local newZone = z
+			local zoneControlPrefix = string.sub(z.name, 1, #prefix + 2)
+			
+			-- If zone name has the form 'prefixR ', set controlledBy to "Red"
+			if (zoneControlPrefix == prefix .. "R ") then
+				z["controlledBy"] = "Red"
+				
+			-- If zone name has the form 'prefixR ', set controlledBy to "Blue"
+			elseif (zoneControlPrefix == prefix .. "B ") then
+				z["controlledBy"] = "Blue"
+		
+			-- Otherwise, set controlledBy to "Neutral"
+			else
+				z["controlledBy"] = "Neutral"
+			end
+
+			list[#list+1] = z
+		end
+	end
+	return list
 end
 
 -- 0. Setup
@@ -88,19 +104,17 @@ end
 
 -- 1. Zone Control
 
-local zonePrefixes = {blueZonePrefix,redZonePrefix}
+local zoneList = {}
+zoneList = getAllZonesWithPrefix(prefix)
 
-targetZones, blueZones, redZones = zoneControl(numberTargetZones,zonePrefixes)
+local targetZones = {}
+targetZones = zoneSelector(zoneList,numberTargetZones)
 
--- identify the starting state of blue and red controlled zones
--- this will only matter until the force disposition function is updated below, then remove
---local blueZones = {'1-1'}
---local redZones = {'1-2','1-3','1-4','1-5','1-6','1-7','1-8','1-9','1-10'}
 
 -- 3b.  Force Structure
-
 local bluePlatoons = {"C1-1","C2-1"}
 local bluePlatoonTypes = {"armor","armor"}
+
 
 -- 2.  Higher Order Command: Assign the commanders missions 
 local moveZones = {}
@@ -111,7 +125,6 @@ moveZones = assignMission(targetZones,bluePlatoons,2)
 -- the last entry is for the HQ unit
 
 --this is where we can write some clever AI that behave differently.
-
 local blueAssignedZone={}
 
 for i=1,(table.getn(bluePlatoons)) do
@@ -120,12 +133,9 @@ for i=1,(table.getn(bluePlatoons)) do
 
 end
 
-blueAssignedZone[blueHQ] = blueZones[1]
 
 
 -- 5.  Movement Orders: Send units to waypoints based on commanders' missions
-
---all units
 for i = 1,table.getn(bluePlatoons) do
 	mist.groupToRandomZone(bluePlatoons[i] ,blueAssignedZone[bluePlatoons[i]] , nil ,nil ,50 ,true )
 end

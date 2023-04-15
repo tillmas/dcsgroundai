@@ -78,7 +78,7 @@ function getAllZonesWithPrefix(prefix)
 		-- If zone name starts with specified prefix, add the zone to the list.
 		if (string.sub(z.name, 1, #prefix) == prefix) then
 			local newZone = z
-			local zoneControlPrefix = string.sub(z.name, 1, #prefix + 2)
+			local zoneControlPrefix = string.sub(z.name, 1, #prefix + 1)
 			
 			-- If zone name has the form 'prefixR ', set controlledBy to "Red"
 			if (zoneControlPrefix == prefix .. "R") then

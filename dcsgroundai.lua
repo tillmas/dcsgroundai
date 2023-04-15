@@ -90,7 +90,6 @@ local redZones = {'1-2','1-3','1-4','1-5','1-6','1-7','1-8','1-9','1-10'}
 
 -- 3b.  Force Structure
 
-local blueHQ =  'CHQ'
 local bluePlatoons = {"C1-1","C2-1"}
 local bluePlatoonTypes = {"armor","armor"}
 
@@ -117,13 +116,9 @@ blueAssignedZone[blueHQ] = blueZones[1]
 
 -- 5.  Movement Orders: Send units to waypoints based on commanders' missions
 
---all units except HQ
+--all units
 for i = 1,table.getn(bluePlatoons) do
 	mist.groupToRandomZone(bluePlatoons[i] ,blueAssignedZone[bluePlatoons[i]] , nil ,nil ,50 ,true )
 end
 
--- HQ
-do
-	mist.groupToRandomZone(blueHQ ,blueAssignedZone[blueHQ] , nil ,nil ,50 ,true )
-end
 

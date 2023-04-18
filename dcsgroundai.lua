@@ -5,20 +5,20 @@
 -- Function definitions
 -- *********************************************************
 function table.contains(table, element)
-  for _, value in pairs(table) do
-    if value == element then
-      return true
-    end
-  end
-  return false
+	for _, value in pairs(table) do
+		if value == element then
+		  return true
+		end
+	end
+	return false
 end
 
 function table.invert(table)
-   local s={}
-   for k,v in pairs(table) do
-     s[v]=k
-   end
-   return s
+	local s={}
+	for k,v in pairs(table) do
+		s[v]=k
+	end
+	return s
 end
 
 function assignMission(TargetZones,ReferenceUnit,numZones)
@@ -109,7 +109,7 @@ function generateCommander()
 	}
 end
 
-function getForceStructure(prefix) 
+function getForceStructure(prefix, ignoredCommanders) 
 	-- Returns a list of commanders and their forces, grouped by coalition
 	-- {
 	--		["Commander1"] = {
@@ -132,15 +132,17 @@ function getForceStructure(prefix)
 		local groupPrefix, commanderName, groupName = string.match(g.groupName, "(.*)_(.*)-(.*)")
 
 		-- Validate that the group contains the correct _PREFIX and has a commander that isn't ignored
-		if (groupPrefix == prefix and not table.contains(_IGNORED_COMMANDERS, commanderName)) then
+		if (groupPrefix == prefix) then
 		
-			--	Check if commander object already exists. If not, create it.
-			if (commanderList[g.coalition][commanderName] == nil) then
-				commanderList[g.coalition][commanderName] = generateCommander()
+			if (not table.contains(ignoredCommanders, commanderName)) then
+				--	Check if commander object already exists. If not, create it.
+				if (commanderList[g.coalition][commanderName] == nil) then
+					commanderList[g.coalition][commanderName] = generateCommander()
+				end
+				
+				-- 	Add unit/group to commander object's "forces" table.
+				table.insert(commanderList[g.coalition][commanderName]["forces"], g.groupName)
 			end
-			
-			-- 	Add unit/group to commander object's "forces" table.
-			table.insert(commanderList[g.coalition][commanderName]["forces"], g.groupName)
 		end
 	end
 	
@@ -153,7 +155,6 @@ end
 -- *********************************************************
 -- 0. Setup
 -- *********************************************************
---need a random number seed here
 
 -- mission editor inputs
 
@@ -179,7 +180,7 @@ targetZones = zoneSelector(zoneList, _NUM_TARGET_ZONES)
 -- *********************************************************
 -- 3b.  Force Structure
 -- *********************************************************
-local commanderForces = getForceStructure(_PREFIX)
+local commanderForces = getForceStructure(_PREFIX, _IGNORED_COMMANDERS)
 
 -- *********************************************************
 -- 2.  Higher Order Command: Assign the commanders missions 
@@ -187,7 +188,7 @@ local commanderForces = getForceStructure(_PREFIX)
 local moveZones = {}
 -- TODO: forceStructure["A"]["forces"] is temporary code to make Higher Order Command still work.
 -- This will be updated in issue #6.
-moveZones = assignMission(targetZones, commanderForces["A"]["forces"], 2)
+moveZones = assignMission(targetZones, commanderForces["blue"]["C"]["forces"], 2)
 
 
 -- *********************************************************
@@ -211,7 +212,7 @@ moveZones = assignMission(targetZones, commanderForces["A"]["forces"], 2)
 -- *********************************************************
 for i = 1,2 do
 --	mist.groupToRandomZone(bluePlatoons[i], blueAssignedZone[bluePlatoons[i]], nil, nil, 50, true)
-	mist.groupToRandomZone(commanderForces["A"]["forces"][i], moveZones[i], nil, nil, 50, true)
+	mist.groupToRandomZone(commanderForces["blue"]["C"]["forces"][i], moveZones[i], nil, nil, 50, true)
 end
 
 

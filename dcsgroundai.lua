@@ -5,20 +5,20 @@
 -- Function definitions
 -- *********************************************************
 function table.contains(table, element)
-  for _, value in pairs(table) do
-    if value == element then
-      return true
-    end
-  end
-  return false
+	for _, value in pairs(table) do
+		if value == element then
+		  return true
+		end
+	end
+	return false
 end
 
 function table.invert(table)
-   local s={}
-   for k,v in pairs(table) do
-     s[v]=k
-   end
-   return s
+	local s={}
+	for k,v in pairs(table) do
+		s[v]=k
+	end
+	return s
 end
 
 function assignMission(TargetZones,ReferenceUnit,numZones)
@@ -92,28 +92,86 @@ function getAllZonesWithPrefix(prefix)
 	return list
 end
 
+function generateCommander()
+
+	-- Commander Strategy Enumerations
+	-- DEFAULT: 
+	
+	-- TODO: Commander strategy enumerations, and 
+	-- 		add logic to assign a strategy to commanders
+	--	
+	--	Need to consider how commanders can persist 
+	--		between missions.
+	
+	return {
+		["strategy"] = "DEFAULT",
+		["forces"] = {}
+	}
+end
+
+function getForceStructure(prefix, ignoredCommanders) 
+	-- Returns a list of commanders and their forces, grouped by coalition
+	-- {
+	--		["Commander1"] = {
+	--			["strategy"] = "STRATEGY_NAME",
+	--			["forces"] = {
+	--				"Unit/Group 1 name"
+	--				"Unit/Group 2 name"
+	--			}
+	--		}
+	-- }
+
+	-- Get forces in battlefield with user-defined prefix
+	local commanderList = {
+		["blue"] = {},
+		["red"] = {},
+	}
+	for _, g in pairs(mist.DBs.groupsByName) do
+		-- Parse group object name into prefix, commander's name, and group's name
+		-- [PREFIX]_[COMMANDERNAME]_[GROUPNAME]
+		local groupPrefix, commanderName, groupName = string.match(g.groupName, "(.*)_(.*)-(.*)")
+
+		-- Validate that the group contains the correct _PREFIX and has a commander that isn't ignored
+		if (groupPrefix == prefix) then
+		
+			if (not table.contains(ignoredCommanders, commanderName)) then
+				--	Check if commander object already exists. If not, create it.
+				if (commanderList[g.coalition][commanderName] == nil) then
+					commanderList[g.coalition][commanderName] = generateCommander()
+				end
+				
+				-- 	Add unit/group to commander object's "forces" table.
+				table.insert(commanderList[g.coalition][commanderName]["forces"], g.groupName)
+			end
+		end
+	end
+	
+	return commanderList
+end
+
+
 -- *********************************************************
 -- ****************** 		   MAIN 		****************
 -- *********************************************************
 -- 0. Setup
 -- *********************************************************
---need a random number seed here
 
 -- mission editor inputs
 
 local _NUM_TARGET_ZONES = 5
+local _IGNORED_COMMANDERS = {'A'}
 
 -- mission editors may change the prefix below to whatever they wish to use in the mission.
 -- if the zone name prefix is followed by an R (e.g. 'GAZR-1), the zone will be flagged as Red
 -- if the zone name prefix is followed by an B (e.g. 'GAZB-1), the zone will be flagged as Blue
 -- if the zone name prefix is not followed by a B or and R, the zone will be flagged as Neutral
-local _ZONE_PREFIX = 'GAZ'
+local _PREFIX = 'GAZ'
 
 -- *********************************************************
 -- 1. Zone Control
 -- *********************************************************
 local zoneList = {}
-zoneList = getAllZonesWithPrefix(_ZONE_PREFIX)
+zoneList = getAllZonesWithPrefix(_PREFIX)
 
 local targetZones = {}
 targetZones = zoneSelector(zoneList, _NUM_TARGET_ZONES)
@@ -122,15 +180,15 @@ targetZones = zoneSelector(zoneList, _NUM_TARGET_ZONES)
 -- *********************************************************
 -- 3b.  Force Structure
 -- *********************************************************
-local bluePlatoons = {"C1-1","C2-1"}
-local bluePlatoonTypes = {"armor","armor"}
-
+local commanderForces = getForceStructure(_PREFIX, _IGNORED_COMMANDERS)
 
 -- *********************************************************
 -- 2.  Higher Order Command: Assign the commanders missions 
 -- *********************************************************
 local moveZones = {}
-moveZones = assignMission(targetZones,bluePlatoons,2)
+-- TODO: forceStructure["A"]["forces"] is temporary code to make Higher Order Command still work.
+-- This will be updated in issue #6.
+moveZones = assignMission(targetZones, commanderForces["blue"]["C"]["forces"], 2)
 
 
 -- *********************************************************
@@ -140,20 +198,21 @@ moveZones = assignMission(targetZones,bluePlatoons,2)
 -- the last entry is for the HQ unit
 
 --this is where we can write some clever AI that behave differently.
-local blueAssignedZone={}
+-- local blueAssignedZone = {}
 
-for i=1,(table.getn(bluePlatoons)) do
+-- for i=1,(table.getn(bluePlatoons)) do
 
-	blueAssignedZone[bluePlatoons[i]] = moveZones[i]
+--	blueAssignedZone[bluePlatoons[i]] = moveZones[i]
 
-end
+-- end
 
 
 -- *********************************************************
 -- 5.  Movement Orders: Send units to waypoints based on commanders' missions
 -- *********************************************************
-for i = 1,table.getn(bluePlatoons) do
-	mist.groupToRandomZone(bluePlatoons[i] ,blueAssignedZone[bluePlatoons[i]] , nil ,nil ,50 ,true )
+for i = 1,2 do
+--	mist.groupToRandomZone(bluePlatoons[i], blueAssignedZone[bluePlatoons[i]], nil, nil, 50, true)
+	mist.groupToRandomZone(commanderForces["blue"]["C"]["forces"][i], moveZones[i], nil, nil, 50, true)
 end
 
 

@@ -47,7 +47,7 @@ function getNClosestZones(zoneList, numZones, referencePoint)
 	return closestZones
 end
 
-function assignCoalitionMissions(coalition, targetZones, commanderList, numZones)
+function assignMissions(targetZones, commanderList, numZones)
 	local assignableZones = {}
 	
 	-- Initialize assignable zones
@@ -57,10 +57,10 @@ function assignCoalitionMissions(coalition, targetZones, commanderList, numZones
 	
 	-- Assign Missions
 	-- For all coalition commanders, assign numZones zones from targetZones
-	for cName, cObj in pairs(commanderList[coalition]) do
+	for cName, cObj in pairs(commanderList) do
 
 		-- Set reference point to the location of a randomly selected group in this commander's forces
-		local referencePoint = mist.getGroupPoints(commanderList[coalition][cName]["forces"][1])[1]
+		local referencePoint = mist.getGroupPoints(commanderList[cName]["forces"][1])[1]
 		 
 		local closestZones = getNClosestZones(assignableZones, numZones, referencePoint)
 		
@@ -75,22 +75,11 @@ function assignCoalitionMissions(coalition, targetZones, commanderList, numZones
 		end
 	
 		-- Assign missions to commander
-		commanderList[coalition][cName]["assignedZones"] = closestZones
+		commanderList[cName]["assignedZones"] = closestZones
 	end
-end
-
--- Assigns a specified number of zones (numZones) from TargetZones to commanders
-function assignMissions(targetZones, commanderList, numZones)
-
-	-- TODO: This currently just mutates the object passed as commanderList and returns it.
-	-- This should be organized as a chain function or these functions should copy the
-	-- commander List.
-	assignCoalitionMissions("blue", targetZones, commanderList, numZones)
-	assignCoalitionMissions("red", targetZones, commanderList, numZones)
 	
 	return commanderList
 end
-
 
 function zoneSelector(zoneList, numZones, removeFromList)
 	-- randomly choose zones from a list of zones
@@ -231,7 +220,8 @@ local commanderForces = getForceStructure(_PREFIX, _IGNORED_COMMANDERS)
 -- *********************************************************
 -- 2.  Higher Order Command: Assign the commanders missions 
 -- *********************************************************
-assignMissions(targetZones, commanderForces, _NUM_ZONES_PER_COMMANDER)
+assignMissions(targetZones, commanderForces["blue"], numZones)
+assignMissions(targetZones, commanderForces["red"], numZones)
 
 -- *********************************************************
 -- 4.  Force Disposition

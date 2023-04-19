@@ -220,8 +220,8 @@ local commanderForces = getForceStructure(_PREFIX, _IGNORED_COMMANDERS)
 -- *********************************************************
 -- 2.  Higher Order Command: Assign the commanders missions 
 -- *********************************************************
-assignMissions(targetZones, commanderForces["blue"], numZones)
-assignMissions(targetZones, commanderForces["red"], numZones)
+assignMissions(targetZones, commanderForces["blue"], _NUM_ZONES_PER_COMMANDER)
+assignMissions(targetZones, commanderForces["red"], _NUM_ZONES_PER_COMMANDER)
 
 -- *********************************************************
 -- 4.  Force Disposition

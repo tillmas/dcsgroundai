@@ -57,7 +57,7 @@ function newHIGHCOMMAND (PREFIX)
 			local gPrefix, cName, gName = string.match(g.groupName, "(.*)_(.*)-(.*)")
 
 			-- Validate that the group contains the correct PREFIX and has a commander that isn't ignored
-			if (gPrefix == _PREFIX and g.coalition = coalition) then
+			if (gPrefix == _PREFIX and g.coalition == coalition) then
 			
 				if (commanderConfig[cName] ~= nil) then
 					--	Check if commander object already exists. If not, create it.

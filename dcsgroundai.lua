@@ -287,28 +287,6 @@ end
 -- 0. Setup
 -- *********************************************************
 
--- *** Mission Editor inputs ***
-
--- mission editors may change the prefix below to whatever they wish to use in the mission.
--- if the zone name prefix is followed by an R (e.g. 'GAZR-1), the zone will be flagged as Red
--- if the zone name prefix is followed by an B (e.g. 'GAZB-1), the zone will be flagged as Blue
--- if the zone name prefix is not followed by a B or and R, the zone will be flagged as Neutral
-local _PREFIX = 'GAZ'
-
-local _NUM_TARGET_ZONES = 5
-local _IGNORED_COMMANDERS = {'A'}
-local _NUM_ZONES_PER_BLUE_COMMANDER = 2
-local _BLUE_COMMANDER_CONFIG = {
-	["B"] = StrategyDefault,
-	["C"] = StrategyDefault,
-	["D"] = StrategyDefault
-}
-
-local _NUM_ZONES_PER_RED_COMMANDER = 1
-local _RED_COMMANDER_CONFIG = {
-	["C"] = StrategyDefault,
-}
-
 -- *** Instanstiate High Command
 local highCommand = newHIGHCOMMAND(_PREFIX)
 

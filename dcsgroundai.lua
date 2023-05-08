@@ -21,46 +21,79 @@ function table.invert(table)
 	return s
 end
 
-function assignMission(TargetZones,ReferenceUnit,numZones)
---a simple version for testing, returns as many are as asked for
---reference unit is not currently used, but is left to allow for calculation of zone proximity
-
-	attZone = {}
-
-	if table.getn(TargetZones) <= numZones then
+function getNClosestZones(zoneList, numZones, referencePoint)
+	local closestZones = {}
+	local distances = {}
 	
-		attZone = TargetZones
-	
-	else
-
-		for i=1,numZones do
-			attZone[i] = TargetZones[math.random(1,table.getn(TargetZones))]
-		end
-	
+	-- Calculate distance to each zone
+	for i = 1, #zoneList do
+		distances[i] = {
+			zoneList[i],
+			mist.utils.get2DDist(
+				referencePoint,
+				mist.utils.makeVec2(zoneList[i].point)
+			)
+		}
 	end
 	
-	return attZone
+	-- Sort zones by distance
+	table.sort(distances, function(a, b) return a[2] < b[2] end)
 	
+	-- Get #numZones closest zones
+	for i = 1, numZones do
+	   closestZones[i] = distances[i][1].name
+	end
 
+	return closestZones
 end
 
-function zoneSelector(zoneList,numberTaskZones)
-
-	-- randomly choose five zones of interest for the mission
-	-- this could be done with some kind of weighted value function
-	local targetZones = {}
-
-	for i = 1,numberTaskZones do
-		testZone = zoneList[math.random(table.getn(zoneList))]
-			if table.contains(targetZones,testZone)==false then
-				table.insert(targetZones,testZone)
-			else
-				i = i-1
-			end
+function assignMissions(targetZones, commanderList, numZones)
+	local assignableZones = {}
+	
+	-- Initialize assignable zones
+	for key, zone in pairs(targetZones) do
+		table.insert(assignableZones, zone)
 	end
 	
-	return targetZones
+	-- Assign Missions
+	-- For all coalition commanders, assign numZones zones from targetZones
+	for cName, cObj in pairs(commanderList) do
+
+		-- Set reference point to the location of a randomly selected group in this commander's forces
+		local referencePoint = mist.getGroupPoints(commanderList[cName]["forces"][1])[1]
+		 
+		local closestZones = getNClosestZones(assignableZones, numZones, referencePoint)
+		
+		-- Remove closest zones from assignableZones so they are not assigned to another Commander
+		for i = 1, #assignableZones do
+			for j = 1, #closestZones do
+				if assignableZones[i] == closestZones[j] then
+					table.remove(assignableZones, i)
+					i = i - 1
+				end
+			end
+		end
 	
+		-- Assign missions to commander
+		commanderList[cName]["assignedZones"] = closestZones
+	end
+	
+	return commanderList
+end
+
+function zoneSelector(zoneList, numZones, removeFromList)
+	-- randomly choose zones from a list of zones
+	-- if removeFromList is true, chosen zones will be removed from the list (original object is mutated)
+	local targetZones = {}
+	for i = 1,numZones do
+		if removeFromList then
+			table.insert(targetZones, table.remove(zoneList, math.random(#zoneList)))
+		else
+			table.insert(targetZones, zoneList[math.random(#zoneList)])
+		end
+		
+	end
+	return targetZones
 end
 
 function getAllZonesWithPrefix(prefix)
@@ -105,7 +138,8 @@ function generateCommander()
 	
 	return {
 		["strategy"] = "DEFAULT",
-		["forces"] = {}
+		["forces"] = {},
+		["assignedZones"] = {}
 	}
 end
 
@@ -156,7 +190,7 @@ end
 -- 0. Setup
 -- *********************************************************
 
--- mission editor inputs
+-- Mission Editor inputs
 
 local _NUM_TARGET_ZONES = 5
 local _IGNORED_COMMANDERS = {'A'}
@@ -166,6 +200,7 @@ local _IGNORED_COMMANDERS = {'A'}
 -- if the zone name prefix is followed by an B (e.g. 'GAZB-1), the zone will be flagged as Blue
 -- if the zone name prefix is not followed by a B or and R, the zone will be flagged as Neutral
 local _PREFIX = 'GAZ'
+local _NUM_ZONES_PER_COMMANDER = 2
 
 -- *********************************************************
 -- 1. Zone Control
@@ -174,7 +209,7 @@ local zoneList = {}
 zoneList = getAllZonesWithPrefix(_PREFIX)
 
 local targetZones = {}
-targetZones = zoneSelector(zoneList, _NUM_TARGET_ZONES)
+targetZones = zoneSelector(zoneList, _NUM_TARGET_ZONES, false)
 
 
 -- *********************************************************
@@ -185,34 +220,24 @@ local commanderForces = getForceStructure(_PREFIX, _IGNORED_COMMANDERS)
 -- *********************************************************
 -- 2.  Higher Order Command: Assign the commanders missions 
 -- *********************************************************
-local moveZones = {}
--- TODO: forceStructure["A"]["forces"] is temporary code to make Higher Order Command still work.
--- This will be updated in issue #6.
-moveZones = assignMission(targetZones, commanderForces["blue"]["C"]["forces"], 2)
-
+assignMissions(targetZones, commanderForces["blue"], _NUM_ZONES_PER_COMMANDER)
+assignMissions(targetZones, commanderForces["red"], _NUM_ZONES_PER_COMMANDER)
 
 -- *********************************************************
 -- 4.  Force Disposition
 -- *********************************************************
--- create a table to disposition destinations for each platoon for blue - clearly not algorithmic at this time
--- the last entry is for the HQ unit
-
---this is where we can write some clever AI that behave differently.
--- local blueAssignedZone = {}
-
--- for i=1,(table.getn(bluePlatoons)) do
-
---	blueAssignedZone[bluePlatoons[i]] = moveZones[i]
-
--- end
-
+-- TBD
 
 -- *********************************************************
 -- 5.  Movement Orders: Send units to waypoints based on commanders' missions
 -- *********************************************************
-for i = 1,2 do
---	mist.groupToRandomZone(bluePlatoons[i], blueAssignedZone[bluePlatoons[i]], nil, nil, 50, true)
-	mist.groupToRandomZone(commanderForces["blue"]["C"]["forces"][i], moveZones[i], nil, nil, 50, true)
+for _, coalition in pairs({"blue", "red"}) do
+	for commander, __ in pairs (commanderForces[coalition]) do
+		for i = 1, #commanderForces[coalition][commander]["forces"] do
+			local assignedZones = commanderForces[coalition][commander]["assignedZones"]
+			local randomZone = assignedZones[math.random(#assignedZones)]
+			
+			mist.groupToRandomZone(commanderForces[coalition][commander]["forces"][i], randomZone, nil, nil, 50, true)
+		end
+	end
 end
-
-

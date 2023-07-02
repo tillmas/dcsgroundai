@@ -3,17 +3,19 @@
 
 -- *** Mission Editor inputs ***
 
-local _PREFIX = 'GAZ'
+_PREFIX = 'GAZ'
 
-local _NUM_TARGET_ZONES = 5
-local _NUM_ZONES_PER_BLUE_COMMANDER = 2
-local _BLUE_COMMANDER_CONFIG = {
+_NUM_TARGET_ZONES = 5
+_NUM_ZONES_PER_BLUE_COMMANDER = 2
+_BLUE_COMMANDER_CONFIG = {
 	["B"] = StrategyDefault,
 	["C"] = StrategyDefault,
 	["D"] = StrategyDefault
 }
 
-local _NUM_ZONES_PER_RED_COMMANDER = 1
-local _RED_COMMANDER_CONFIG = {
-	["B"] = StrategyDefault,
+_NUM_ZONES_PER_RED_COMMANDER = 1
+_RED_COMMANDER_CONFIG = {
+	["E"] = StrategyDefault,
+	["F"] = StrategyDefault,
+	["G"] = StrategyDefault,
 }
